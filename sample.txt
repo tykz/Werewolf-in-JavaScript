@@ -1,0 +1,155 @@
+２．サンプルコード
+
+Node.jsとSocket.IOを使ったサンプルコードを掲載しておきます。
+
+色々ネットを探しましたが（探しきれてないかもしれません）、
+Node.js+Socket.IOでチャットを行う適当なコードがみつからなかったので自作しました。Node.jsやSocket.IOに精通されている方にとっては当たり前のような実装かと思います。
+冗長な部分等ありましたらご指摘ください。
+
+app.js（サーバ側のソース）
+var app = require('express').createServer()
+  , io = require('socket.io').listen(app);
+app.listen(8124);
+ 
+app.get('/', function (req, res) {
+    res.sendfile(__dirname + '/index.html');
+});
+ 
+io.sockets.on('connection', function (socket) {
+ 
+    // クライアントからメッセージ受信
+    socket.on('server send', function (msg) {
+ 
+        // ブロードキャストで送信
+        io.sockets.emit('send user', msg );
+    });
+ 
+    // 切断 
+    socket.on('disconnect', function () {
+        io.sockets.emit('user disconnected',count);
+    });
+});
+index.html（クライアント側のソース）
+<style>
+body {
+    margin: 20px;
+}
+p {
+    margin: 5px 0;
+    padding: 5px 0;
+    border-bottom: 1px solid #000;
+}
+dt{
+    margin-top: 5px;
+    width: 100px;
+    float: left;
+    text-align: right;
+}
+dd{
+    margin: 5px 0 5px 100px;
+}
+input {
+    font-size: 100%;
+    padding: 5px;
+}
+#message {
+    width: 400px;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+jQuery(function(){
+  var socket = io.connect('http://localhost');
+ 
+  // サーバからメッセージ受信
+  socket.on('send user', function (msg) {
+      jQuery('#chat').prepend('<p>'+msg+'</p>');
+  });
+  jQuery('input[type=submit]').click(function(){
+      var name = jQuery('#name').val();
+      var message = jQuery('#message').val();
+ 
+      // サーバへメッセージ送信
+      socket.emit('server send', name+'：'+message);
+  });
+});
+</script>
+<div>
+  <dl>
+    <dt>名前：</dt><dd><input type="text" id="name"></dd>
+    <dt>メッセージ：</dt><dd><input type="text" id="message" size="140" /></dd>
+    <dd><input type="submit" value="送信" /></dd>
+  </dl>
+  <hr />
+  <div id="chat"></div>
+</div>
+３．サーバへのデータ送信方法
+
+サーバへ文字列を送信するには、まず、クライアント側にsocket.emit()を記述します（青色部分）。
+
+クライアント側
+jQuery('input[type=submit]').click(function(){
+    var name = jQuery('#name').val();
+    var message = jQuery('#message').val();
+    socket.emit('server send', name+'：'+message);
+});
+
+
+「emit」は「送信する」という意味の英単語で、サーバ・クライアントどちらでも使えます。
+赤色は送受信のためのカスタムイベントで、ここでは任意の文字列「server send」を記述しています。
+第2パラメータには送信ボタンをクリックしたときのテキストフィールドデータ
+（チャットの名前と文字列）の関数を定義しています。
+
+そして、クライアントからのデータを受信できるよう、サーバ側にsocket.on()を記述します。
+
+
+
+サーバ側
+io.sockets.on('connection', function (socket) {
+    socket.on('server send', function (msg) {
+        // 受信メッセージの処理
+    });
+});
+
+
+第1パラメータのカスタムイベント名はクライアントで設定したものと一致していなければいけません。
+ここが一致していないとサーバで受信できません。第2パラメータはデータ受信時の関数を定義します。
+パラメータ（ここではmsg）には受信時のデータを定義できます。
+
+
+
+４．クライアントへの送信方法
+
+クライアントへブロードキャストで文字列を送信するには、
+まず、サーバ側にio.sockets.emit()を記述します（青色部分）。
+
+
+サーバ側
+io.sockets.on('connection', function (socket) {
+    socket.on('server send', function (msg) {
+        io.sockets.emit('send user', msg);
+    });
+});
+
+
+赤色は先程と同様、カスタムイベントで、ここでは任意の文字列「send user」を記述します。
+第2パラメータにはクライアントから受信したチャットデータ（msg）を設定しています。
+
+そして、サーバからのデータを受信できるよう、クライアント側にsocket.on()を記述します。
+
+
+クライアント側
+socket.on('send user', function (msg) {
+    jQuery('#chat').prepend('<p>'+msg+'</p>');
+});
+
+
+
+受け取るクライアントでは、サーバ側のemit()の第1引数（赤色のイベント名）を必ず指定します。
+ここが一致していないとクライアントで受信できません。
+第2パラメータはデータ受信時の関数を定義します。
+パラメータ（ここではmsg）には受信時のデータを定義できます。
+
+受信後、チャットデータ（msg）をjQueryのprepend()を使って表示します。
+
