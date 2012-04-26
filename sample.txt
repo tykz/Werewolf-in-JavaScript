@@ -153,3 +153,57 @@ socket.on('send user', function (msg) {
 
 受信後、チャットデータ（msg）をjQueryのprepend()を使って表示します。
 
+
+
+//画像の表示　トリミング
+
+onload = function() {
+  draw();};function draw() {
+  var canvas = document.getElementById('c1');
+ if ( ! canvas || ! canvas.getContext ) {
+ return false; 
+}
+  var ctx = canvas.getContext('2d'); 
+ /* Imageオブジェクトを生成 */  
+var img = new Image(); 
+ img.src = "image1.gif?" + new Date().getTime(); 
+ /* 画像が読み込まれるのを待ってから処理を続行 */ 
+ img.onload = function() {
+    ctx.drawImage(img, 100, 80, 50, 40, 80, 60, 150, 120);  
+}
+}
+
+キャンバスを作る
+<canvas width="400" height="300" id="sample"></canvas>
+
+//薄い文字を表示
+inputタグやtextareaタグにplaceholder属性でテキストを設定します。
+ 
+
+//背景を重ねて表示
+
+#sample_01{
+width: 300px;
+height: 220px;
+padding: 10px;
+background-color: #6C9;
+background-image: url(../images/suzume3.gif), url(../images/suzume2.gif), url(../images/suzume.gif);
+background-repeat: no-repeat, repeat-x, no-repeat;
+background-position: 40% 85%,50% 70%,40% 50%;
+}
+
+/*↓ これは現在、IE9～でしか、できません。*/
+
+#sample_02{
+width: 500px;
+height: 250px;
+padding: 10px;
+background-color: #9C9;
+background-image: url(../images/suzume3.gif), url(../images/suzume2.gif), url(../images/suzume.gif);
+background-repeat: no-repeat;
+background-position: 90px 80px,
+left 120px bottom 40px,
+right top;
+}
+
+
